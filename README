@@ -1,3 +1,7 @@
+Craig McNeile forked this distribution to see if he could get it to
+work with python3.
+
+
 [http://qcdutils.googlecode.com/hg/qcdutils.py Download here]
 
 QCD utils is a single file utility to deal with Lattice QCD data (gauge configurations and propagators). It requires Python 2.5 or higher (but not Python 3.x which is not compatible with 2.x) but it requires no compilation steps and has no dependencies other than Python standard libraries. Upon download it should work out of the box.
