@@ -13,7 +13,7 @@ LOGO ="""
 ##    ##  ##    ## ##     ##    ##     ##    ##     ##  ##       ##    ##
  ##### ##  ######  ########      #######     ##    #### ########  ######
 Created by Massimo Di Pierro - License GPL2 - all-to-all convertion utility
-For the latest source and documentation: http://code.google.com/p/qcdutils/
+For the latest source and documentation:  https://github.com/cmcneile/qcdutils
 """
 
 USAGE ="""
