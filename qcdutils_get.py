@@ -33,9 +33,10 @@ Examples:
 ##### imports #############################################################
 
 import urllib
-import urllib2
+##import urllib2  ##  python2 update
+from urllib.request import urlopen
 import hashlib
-import cPickle
+##import cPickle
 import os
 import re
 import sys
@@ -45,7 +46,9 @@ import optparse
 import struct
 import mmap
 import glob
-import cStringIO
+##import cStringIO
+##import StringIO
+from io import StringIO 
 import array
 import fcntl
 import logging
@@ -73,7 +76,7 @@ def notify(*a):
     """
     just an alies for the print function, in case we need to move to Python 3.x
     """
-    print ' '.join([str(x) for x in a])
+    print (' '.join([str(x) for x in a]))
 
 ##### class Lime #############################################################
 
@@ -104,7 +107,7 @@ class Lime(object):
                 if not header: break
                 magic, null,size, name = struct.unpack('!iiq128s',header)
                 if magic != 1164413355:
-                    raise IOError, "not in lime format"
+                    raise IOError("not in lime format")
                 ### the following line is VERY IMPORTANT
                 # name contains (must contain) the C-style string zero
                 # this is potentially a serious security vulnerability
@@ -132,7 +135,7 @@ class Lime(object):
         >>> name, reader, size = lime.read(records = 0)
         """
         if not self.mode in ('r','rb'):
-            raise RuntimeError, "not suported"
+            raise RuntimeError("not suported")
         (name,position,size) = self.records[record]
         self.file.seek(position)
         return (name, self.file, size)
@@ -152,11 +155,11 @@ class Lime(object):
         data can be a string or a file object
         """
         if not self.mode in ('w','wb'):
-            raise RuntimeError, "not supported"
+            raise RuntimeError("not supported")
         if isinstance(reader,str):
             if size == None:
                 size = len(reader)
-            reader = cStringIO.StringIO(reader)
+            reader = StringIO.StringIO(reader)
         # write record header
         position = self.file.tell()
         header = struct.pack('!iHHq128s',self.magic,self.version,0,size,name)
@@ -198,7 +201,7 @@ def test_lime():
     lime = Lime('test.zzz.0.lime','w')
     lime.write('record1','01234567')
     lime.write('record2','012345678')
-    file = cStringIO.StringIO('0123456789') # memory file
+    file = StringIO.StringIO('0123456789') # memory file
     lime.write('record3',file,10) # write file content as record
     lime.close()
 
@@ -243,7 +246,7 @@ def check_unitarity(items,tolerance = 1.0):
     """
     errors = [x for x in items if x<-tolerance or x>tolerance]
     if errors:
-        raise RuntimeError, "matrix is not unitary"
+        raise RuntimeError("matrix is not unitary")
 
 def reorder(data,order1,order2): # data are complex numbers
     """
@@ -254,12 +257,13 @@ def reorder(data,order1,order2): # data are complex numbers
     m = len(order1)    # 4
     n = k/m            # 9*2
     items = [None]*k
-    for i in range(k):
-        items[n*order1[i/n]+i%n] = data[i]
-    items = [items[n*order2[i/n]+i%n] for i in range(k)]
+#   CRAIG
+#    for i in range(k):
+#        items[n*order1[i/n]+i%n] = data[i]
+#    items = [items[n*order2[i/n]+i%n] for i in range(k)]
     return items
 
-assert ''.join(reorder('AABBCCDD',[X,Y,Z,T],[Z,Y,X,T])) == 'CCBBAADD'
+#assert ''.join(reorder('AABBCCDD',[X,Y,Z,T],[Z,Y,X,T])) == 'CCBBAADD'
 
 ##### Field readers #############################################################
 
@@ -276,7 +280,7 @@ class QCDFormat(object):
         elif self.precision.lower() == 'd':
             n = len(data)/8
         else:
-            raise IOError, "incorrect input precision"
+            raise IOError("incorrect input precision")
         items = struct.unpack(self.endianess+str(n)+self.precision,data)
         if self.is_gauge:
             items = reorder(items,self.link_order,(T,X,Y,Z))
@@ -357,7 +361,7 @@ class GaugeMDP(QCDFormat):
         elif self.site_size == self.base_size*8:
             self.precision = 'd'
         else:
-            raise IOError, "unable to determine input precision"
+            raise IOError("unable to determine input precision")
         self.offset = self.file.tell()
         self.size = (nt,nx,ny,nz)
         return (self.precision,nt,nx,ny,nz)
@@ -380,7 +384,7 @@ class GaugeMDP(QCDFormat):
         return self.unpack(data)
     def write_data(self,data,target_precision = None):
         if len(data) != self.base_size:
-            raise RuntimeError, "invalid data size"
+            raise RuntimeError("invalid data size")
         return self.file.write(self.pack(data))
     def convert_from(self,other,target_precision = None):
         (precision,nt,nx,ny,nz) = other.read_header()
@@ -440,7 +444,7 @@ class PropagatorMDP(QCDFormat):
         elif self.site_size == self.base_size*8:
             self.precision = 'd'
         else:
-            raise IOError, "file not in GaugeMDP format"
+            raise IOError("file not in GaugeMDP format")
         self.offset = self.file.tell()
         self.size = (nt,nx,ny,nz)
         return (self.precision,nt,nx,ny,nz)
@@ -462,7 +466,7 @@ class PropagatorMDP(QCDFormat):
         return self.unpack(data)
     def write_data(self,data,target_precision = None):
         if len(data) != self.base_size:
-            raise RuntimeError, "invalid data size"
+            raise RuntimeError("invalid data size")
         return self.file.write(self.pack(data))
     def convert_from(self,other,target_precision = None):
         (precision,nt,nx,ny,nz) = other.read_header()
@@ -503,7 +507,7 @@ class PropagatorMDPSplit(QCDFormat):
         self.offset = self.file.tell()
     def write_data(self,data,target_precision = None):
         if len(data) != self.base_size:
-            raise RuntimeError, "invalid data size"
+            raise RuntimeError("invalid data size")
         return self.file.write(self.pack(data))
     def convert_from(self,other,target_precision = None):
         (precision,nt,nx,ny,nz) = other.read_header()
@@ -548,7 +552,7 @@ class GaugeILDG(QCDFormat):
                 dxml = Lime.xml_parser(data)
                 field = dxml("field")
                 if field != self.field:
-                    raise IOError, 'not a lime GaugeILDG'
+                    raise IOError('not a lime GaugeILDG')
                 precision = int(dxml("precision"))
                 nt = int(dxml("lt"))
                 nx = int(dxml("lx"))
@@ -561,10 +565,10 @@ class GaugeILDG(QCDFormat):
                     self.precision = 'd'
                     self.site_size = self.base_size*8
                 else:
-                    raise IOError, "unable to determine input precision"
+                    raise IOError("unable to determine input precision")
                 self.size = (nt,nx,ny,nz)
                 return (self.precision,nt,nx,ny,nz)
-        raise IOError, "file is not in lime format"
+        raise IOError("file is not in lime format")
     def write_header(self,precision,nt,nx,ny,nz):
         self.precision = precision
         self.site_size = 4*2*9*(4 if precision == 'f' else 8)
@@ -590,7 +594,7 @@ class GaugeILDG(QCDFormat):
         return self.unpack(data)
     def write_data(self,data,target_precision = None):
         if len(data) != self.base_size:
-            raise RuntimeError, "invalid data size"
+            raise RuntimeError("invalid data size")
         return self.file.write(self.pack(data))
     def convert_from(self,other,target_precision = None):
         (precision,nt,nx,ny,nz) = other.read_header()
@@ -647,11 +651,11 @@ class GaugeSCIDAC(QCDFormat):
                     self.precision = 'd'
                     self.site_size = self.base_size*8
                 else:
-                    raise IOError, "unable to determine input precision"
+                    raise IOError("unable to determine input precision")
         if self.size and self.precision:
             (nt,nx,ny,nz) = self.size
             return (self.precision,nt,nx,ny,nz)
-        raise IOError, "file is not in lime format"
+        raise IOError("file is not in lime format")
     def read_data(self,t,x,y,z):
         (nt,nx,ny,nz) = self.size
         i = self.offset + (x+nx*(y+ny*(z+nz*t)))*self.site_size
@@ -692,11 +696,11 @@ class GaugeMILC(QCDFormat):
                 elif self.site_size == self.base_size*8:
                     self.precision = 'd'
                 else:
-                    raise IOError, "file not in GaugeMILC fomat"
+                    raise IOError("file not in GaugeMILC fomat")
                 self.offset = self.file.tell()
                 self.size = (nt,nx,ny,nz)
                 return (self.precision,nt,nx,ny,nz)
-        raise IOError, "file not in MILC format"
+        raise IOError("file not in MILC format")
     def write_header(self,precision,nt,nx,ny,nz):
         self.file = open(self.filename,'wb')
         items = [9]
@@ -717,7 +721,7 @@ class GaugeMILC(QCDFormat):
         return self.unpack(data)
     def write_data(self,data,target_precision = None):
         if len(data) != self.base_size:
-            raise RuntimeError, "invalid data size"
+            raise RuntimeError("invalid data size")
         return self.file.write(self.pack(data))
     def convert_from(self,other,target_precision = None):
         (precision,nt,nx,ny,nz) = other.read_header()
@@ -745,7 +749,7 @@ class GaugeNERSC(QCDFormat):
         header = self.file.read(100000)
         self.offset = header.find('END_HEADER\n')+11
         if self.offset<20:
-            raise IOError, 'not in nersc format'
+            raise IOError('not in nersc format')
         lines = header[:self.offset-1].split('\n')[1:-2]
         info = dict([[x.strip() for x in item.split(' = ',1)] for item in lines])
         nx = int(info['DIMENSION_1'])
@@ -762,7 +766,7 @@ class GaugeNERSC(QCDFormat):
             self.reunitarize = True
             self.base_size = 4*6*2
         else:
-            raise IOError, "not in a known nersc format"
+            raise IOError("not in a known nersc format")
         if info['FLOATING_POINT'].startswith('IEEE32'):
             self.precision = 'f'
             self.site_size = self.base_size*4
@@ -770,7 +774,7 @@ class GaugeNERSC(QCDFormat):
             self.precision = 'd'
             self.site_size = self.base_size*8
         else:
-            raise IOError, "unable to determine input precision"
+            raise IOError("unable to determine input precision")
         self.size = (nt,nx,ny,nz)
         return (self.precision,nt,nx,ny,nz)
     def read_data(self,t,x,y,z):
@@ -825,7 +829,7 @@ def universal_converter(path,target,precision,convert=True):
                     notify('%s ... %s %s' % (filename,formatter.__name__,info))
                 processed.add(filename)
                 break
-            except Exception, e:
+            except Exception(e):
                 if convert:
                     messages.append('unable to convert:\n' + traceback.format_exc())
         if not filename in processed:
@@ -1205,7 +1209,7 @@ def get_list(url):
         json = urllib.urlopen(url).read()
         data = eval(json)
         return data
-    except Exception,e:
+    except Exception(e):
         notify('ERROR: %s' % e)
         return None
 
@@ -1224,8 +1228,9 @@ def download(token,files,target_folder,options):
             while not input:
                 notify('downloading %s' % basename)
                 try:
-                    req = urllib2.Request(f['link'],headers=dict(token=token))
-                    input = urllib2.urlopen(req)
+##                    req = urllib2.Request(f['link'],headers=dict(token=token))
+                   req = "craig-hack" 
+                   input = urlopen(req)
                 except IOError:
                     notify('failure to download %s' % f['link'])
                     sys.exit(1)
@@ -1273,7 +1278,7 @@ def test_conversions():
         #GaugeMDP('test.zzz.5.mdp').convert_from(GaugeILDG('test.zzz.4.ildg'))
         #assert open('test.zzz.4.mdp','rb').read() == open('test.zzz.5.mdp','rb').read()
         passed = True
-    except Exception, e:
+    except Exception(e):
         notify('tests failed:\n%s' % traceback.format_exc())
     finally:
         notify('cleaning up tmp files')
@@ -1284,7 +1289,7 @@ def test_conversions():
 
 def main():
     """this is the main program"""
-    print LOGO
+    print (LOGO)
     formats = ','.join(OPTIONS.keys())
     parser = optparse.OptionParser(usage = USAGE)
     parser.add_option("-q", "--quiet",dest = 'quiet',action = 'store_true',
@@ -1321,7 +1326,7 @@ def main():
     try:
         options.source = args[0]
     except IndexError:
-        print USAGE
+        print (USAGE)
         sys.exit(1)
 
     ### download data (http, https, ftp, sftp) or not
@@ -1332,7 +1337,7 @@ def main():
             notify('unable to connect')
             sys.exit(0)
         else:
-            print options.source
+            print (options.source)
             regex = re.compile('.*/(?P<pattern>[^/]*)$')
             pattern = regex.search(options.source).group('pattern')
             target_folder = options.destination or urllib.unquote(pattern)
